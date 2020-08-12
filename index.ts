@@ -6,10 +6,10 @@ import {
     Collection, SnowflakeUtil
 } from 'discord.js';
 
-type JoinType = 'permissions' | 'normal' | 'vanity';
+type JoinType = 'permissions' | 'normal' | 'vanity' | 'unknown';
 
 declare interface InvitesTracker {
-    on(event: 'guildMemberAdd', listener: (member: GuildMember, usedInvite: Invite | null, joinType: JoinType) => void): this;
+    on(event: 'guildMemberAdd', listener: (member: GuildMember, joinType: JoinType, usedInvite: Invite | null) => void): this;
 }
 
 interface ExemptGuildFunction {
@@ -98,7 +98,7 @@ class InvitesTracker extends EventEmitter {
         // Fetch new guild invites
         const currentInvites = await member.guild.fetchInvites().catch(() => {});
         if (!currentInvites) {
-            this.emit('guildMemberAdd', member, null, 'missingPermissions');
+            this.emit('guildMemberAdd', member, 'permissions', null);
             return;
         }
         // Retrieve cached guild invites
@@ -109,7 +109,7 @@ class InvitesTracker extends EventEmitter {
         this.invitesCacheUpdates.set(member.guild.id, Date.now());
         // If there was no cache for this guild we can't retrieve used invite
         if (!cachedInvites) {
-            this.emit('guildMemberAdd', member, null);
+            this.emit('guildMemberAdd', member, 'unknown', null);
             return;
         }
 
@@ -138,7 +138,7 @@ class InvitesTracker extends EventEmitter {
             }
         }
 
-        this.emit('guildMemberAdd', member, usedInvites[0], isVanity ? 'vanityURL' : 'regularJoin');
+        this.emit('guildMemberAdd', member, isVanity ? 'vanity' : usedInvites[0] ? 'normal' : 'unknown', usedInvites[0] ?? null);
     }
 
     private fetchGuildCache(guild: Guild): Promise<void> {
