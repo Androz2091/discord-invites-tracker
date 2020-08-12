@@ -1,0 +1,18 @@
+{
+    "name": "discord-invites-tracker",
+    "version": "1.0.0",
+    "main": "index.js",
+    "author": "Androz2091 <androz2091@gmail.com>",
+    "license": "MIT",
+    "dependencies": {
+        "discord.js": "^12.2.0"
+    },
+    "devDependencies": {
+        "@types/ws": "^7.2.6",
+        "@typescript-eslint/eslint-plugin": "^3.9.0",
+        "@typescript-eslint/parser": "^3.9.0",
+        "eslint": "^5.16.0",
+        "eslint-config-airbnb-base": "^14.2.0",
+        "typescript": "^3.9.7"
+    }
+}
