@@ -6,7 +6,7 @@ import {
     Collection, SnowflakeUtil
 } from 'discord.js';
 
-type JoinType = 'missingPermissions' | 'regularJoin' | 'vanityURL';
+type JoinType = 'permissions' | 'normal' | 'vanity';
 
 declare interface InvitesTracker {
     on(event: 'guildMemberAdd', listener: (member: GuildMember, usedInvite: Invite | null, joinType: JoinType) => void): this;
