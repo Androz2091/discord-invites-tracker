@@ -17,27 +17,21 @@ const tracker = InvitesTracker.init(client, {
 
 tracker.on('guildMemberAdd', (member, type, invite) => {
 
+    const welcomeChannel = member.guild.channels.cache.find((ch) => ch.name === 'welcome');
+
     if(type === 'normal'){
-        // send welcome message
-        const welcomeChannel = member.guild.channels.cache.find((ch) => ch.name === 'welcome');
         welcomeChannel.send(`Welcome ${member}! You were invited by ${invite.inviter.username}!`);
     }
 
     else if(type === 'vanity'){
-        // send welcome message
-        const welcomeChannel = member.guild.channels.cache.find((ch) => ch.name === 'welcome');
         welcomeChannel.send(`Welcome ${member}! You joined using a custom invite!`);
     }
 
     else if(type === 'permissions'){
-        // send welcome message
-        const welcomeChannel = member.guild.channels.cache.find((ch) => ch.name === 'welcome');
         welcomeChannel.send(`Welcome ${member}! I can't figure out how you joined because I don't have the "Manage Server" permission!`);
     }
 
     else if(type === 'unknown'){
-        // send welcome message
-        const welcomeChannel = member.guild.channels.cache.find((ch) => ch.name === 'welcome');
         welcomeChannel.send(`Welcome ${member}! I can't figure out how you joined the server...`);
     }
 
