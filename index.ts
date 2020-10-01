@@ -3,7 +3,7 @@ import type {
     Client, Snowflake, Invite, Guild, GuildMember
 } from 'discord.js';
 import {
-    Collection, SnowflakeUtil
+    Collection
 } from 'discord.js';
 
 type JoinType = 'permissions' | 'normal' | 'vanity' | 'unknown';
@@ -100,20 +100,21 @@ class InvitesTracker extends EventEmitter {
 
         this.vanityInvitesCache = new Collection();
 
-        if (this.client.readyAt) {
-            this.fetchCache().then(() => {
-                this.cacheFetched = true;
-                this.emit('cacheFetched');
-            });
-        } else {
-            this.client.on('ready', () => {
+        if (this.options.fetchGuilds) {
+            if (this.client.readyAt) {
                 this.fetchCache().then(() => {
                     this.cacheFetched = true;
                     this.emit('cacheFetched');
                 });
-            });
+            } else {
+                this.client.on('ready', () => {
+                    this.fetchCache().then(() => {
+                        this.cacheFetched = true;
+                        this.emit('cacheFetched');
+                    });
+                });
+            }
         }
-        
 
         this.client.on('guildMemberAdd', (member) => this.handleGuildMemberAdd(member as GuildMember));
         this.client.on('inviteCreate', (invite) => this.handleInviteCreate(invite));
@@ -128,20 +129,20 @@ class InvitesTracker extends EventEmitter {
     }
 
     private async handleInviteCreate (invite: TrackedInvite): Promise<void> {
-        if(!this.invitesCache.get(invite.guild.id)) {
-            await this.fetchGuildCache(invite.guild);
-        }
+        // Vérifier que le cache pour ce serveur existe bien
+        if(this.options.fetchGuilds) await this.fetchGuildCache(invite.guild, true);
+        // Ensuite, ajouter l'invitation au cache du serveur
         if (this.invitesCache.get(invite.guild.id)) {
             this.invitesCache.get(invite.guild.id).set(invite.code, invite);
         }
     }
 
     private async handleInviteDelete (invite: Invite): Promise<void> {
+        // Récupère le cache du serveur
         const cachedInvites = this.invitesCache.get(invite.guild.id);
-        if(cachedInvites) {
-            if(cachedInvites.get(invite.code)) {
-                cachedInvites.get(invite.code).deletedTimestamp = Date.now();
-            }
+        // Si le cache pour ce serveur existe et si l'invitation existe bien dans le cache de ce serveur
+        if(cachedInvites && cachedInvites.get(invite.code)) {
+            cachedInvites.get(invite.code).deletedTimestamp = Date.now();
         }
     }
 
@@ -162,7 +163,6 @@ class InvitesTracker extends EventEmitter {
         }
         // Récupération des invitations en cache
         const cachedInvites = this.invitesCache.get(member.guild.id);
-        const lastCacheUpdate = this.invitesCacheUpdates.get(member.guild.id);
         // Mise à jour du cache
         this.invitesCache.set(member.guild.id, currentInvites);
         this.invitesCacheUpdates.set(member.guild.id, Date.now());
@@ -174,24 +174,6 @@ class InvitesTracker extends EventEmitter {
 
         // Ensuite, on compare le cache et les données actuelles (voir commentaires de la fonction)
         let usedInvites = compareInvitesCache(cachedInvites, currentInvites);
-
-        // Si aucune invitation n'a été trouvée, on peut chercher dans le cache les invitations créées il y a peu de temps
-        // v Devenu inutile, l'évènement INVITE_CREATE nous assure que ce cas n'arrivera jamais
-
-        /*
-        if (usedInvites.length === 0 && this.options.fetchAuditLogs && member.guild.me.hasPermission('VIEW_AUDIT_LOG')) {
-            const logs = await member.guild.fetchAuditLogs({
-                limit: 50,
-                type: 'INVITE_CREATE'
-            }).catch(() => {});
-            if (logs && logs.entries.size > 0) {
-                const createdInvites = logs.entries
-                    .filter((e) => SnowflakeUtil.deconstruct(e.id).timestamp > lastCacheUpdate && !currentInvites.get(((e as any) as TrackedInvite).code))
-                    .map((e) => e.target);
-                usedInvites = usedInvites.concat(createdInvites as TrackedInvite[]);
-            }
-        }
-        */
 
         // L'invitation peut aussi être une invitation vanity (https://discord.gg/invitation-personnalisee)
         let isVanity = false;
@@ -211,9 +193,10 @@ class InvitesTracker extends EventEmitter {
         this.emit('guildMemberAdd', member, isVanity ? 'vanity' : usedInvites[0] ? 'normal' : 'unknown', usedInvites[0] ?? null);
     }
 
-    private fetchGuildCache(guild: Guild): Promise<void> {
+    private fetchGuildCache(guild: Guild, useCache: boolean = false): Promise<void> {
         return new Promise((resolve) => {
-            if (guild.me.hasPermission('MANAGE_GUILD') && this.options.fetchGuilds) {
+            if (this.invitesCache.has(guild.id) && useCache) resolve();
+            if (guild.me.hasPermission('MANAGE_GUILD')) {
                 guild.fetchInvites().then((invites) => {
                     this.invitesCache.set(guild.id, invites);
                     this.invitesCacheUpdates.set(guild.id, Date.now());
