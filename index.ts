@@ -25,7 +25,13 @@ interface InvitesTrackerOptions {
     activeGuilds?: Snowflake[];
 }
 
-const compareInvitesCache = (cachedInvites: Collection<string, Invite>, currentInvites: Collection<string, Invite>): Invite[] => {
+interface DeletedInvite extends Invite {
+    deletedTimestamp?: number;
+};
+
+type TrackedInvite = DeletedInvite & Invite;
+
+const compareInvitesCache = (cachedInvites: Collection<string, TrackedInvite>, currentInvites: Collection<string, TrackedInvite>): TrackedInvite[] => {
     const invitesUsed: Invite[] = [];
     currentInvites.forEach((invite) => {
         if (
@@ -41,13 +47,14 @@ const compareInvitesCache = (cachedInvites: Collection<string, Invite>, currentI
             invitesUsed.push(invite);
         }
     });
+    console.log(invitesUsed.length)
     if (invitesUsed.length < 1) {
-        cachedInvites.forEach((invite) => {
+        cachedInvites.sort((a, b) => (a.deletedTimestamp && b.deletedTimestamp) ? b.deletedTimestamp - a.deletedTimestamp : 0).forEach((invite) => {
             if (
                 // if the invite was deleted
                 !currentInvites.has(invite.code)
                 // and it was about to be deleted
-                && invite.uses === invite.maxUses - 1
+                && invite.uses === (invite.maxUses - 1)
             ) {
                 invitesUsed.push(invite);
             }
@@ -61,7 +68,7 @@ class InvitesTracker extends EventEmitter {
     public client: Client;
     public options: Partial<InvitesTrackerOptions>;
 
-    public invitesCache: Collection<Snowflake, Collection<string, Invite>>;
+    public invitesCache: Collection<Snowflake, Collection<string, TrackedInvite>>;
     public invitesCacheUpdates: Collection<Snowflake, number>;
     public cacheFetched: boolean;
 
@@ -94,6 +101,8 @@ class InvitesTracker extends EventEmitter {
         
 
         this.client.on('guildMemberAdd', (member) => this.handleGuildMemberAdd(member as GuildMember));
+        this.client.on('inviteCreate', (invite) => this.handleInviteCreate(invite));
+        this.client.on('inviteDelete', (invite) => this.handleInviteDelete(invite));
     }
 
     get guilds(): Collection<Snowflake, Guild> {
@@ -101,6 +110,24 @@ class InvitesTracker extends EventEmitter {
         if (this.options.exemptGuild) guilds = guilds.filter((g) => !this.options.exemptGuild(g));
         if (this.options.activeGuilds) guilds = guilds.filter((g) => this.options.activeGuilds.includes(g.id));
         return guilds;
+    }
+
+    private async handleInviteCreate (invite: TrackedInvite): Promise<void> {
+        if(!this.invitesCache.get(invite.guild.id)) {
+            await this.fetchGuildCache(invite.guild);
+        }
+        if (this.invitesCache.get(invite.guild.id)) {
+            this.invitesCache.get(invite.guild.id).set(invite.code, invite);
+        }
+    }
+
+    private async handleInviteDelete (invite: Invite): Promise<void> {
+        const cachedInvites = this.invitesCache.get(invite.guild.id);
+        if(cachedInvites) {
+            if(cachedInvites.get(invite.code)) {
+                cachedInvites.get(invite.code).deletedTimestamp = Date.now();
+            }
+        }
     }
 
     private async handleGuildMemberAdd(member: GuildMember): Promise<void> {
@@ -134,9 +161,9 @@ class InvitesTracker extends EventEmitter {
             }).catch(() => {});
             if (logs && logs.entries.size > 0) {
                 const createdInvites = logs.entries
-                    .filter((e) => SnowflakeUtil.deconstruct(e.id).timestamp > lastCacheUpdate && !currentInvites.get(((e as any) as Invite).code))
+                    .filter((e) => SnowflakeUtil.deconstruct(e.id).timestamp > lastCacheUpdate && !currentInvites.get(((e as any) as TrackedInvite).code))
                     .map((e) => e.target);
-                usedInvites = usedInvites.concat(createdInvites as Invite[]);
+                usedInvites = usedInvites.concat(createdInvites as TrackedInvite[]);
             }
         }
 
