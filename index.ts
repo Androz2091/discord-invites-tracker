@@ -93,7 +93,7 @@ class InvitesTracker extends EventEmitter {
         }
         
 
-        this.client.on('guildMemberAdd', (member) => this.handleGuildMemberAdd.bind(this, member as GuildMember));
+        this.client.on('guildMemberAdd', (member) => this.handleGuildMemberAdd(member as GuildMember));
     }
 
     get guilds(): Collection<Snowflake, Guild> {
