@@ -9,6 +9,7 @@ import {
 type JoinType = 'permissions' | 'normal' | 'vanity' | 'unknown';
 
 declare interface InvitesTracker {
+    on(event: 'cacheFetched', listener: () => void): this;
     on(event: 'guildMemberAdd', listener: (member: GuildMember, joinType: JoinType, usedInvite: Invite | null) => void): this;
 }
 
@@ -77,9 +78,20 @@ class InvitesTracker extends EventEmitter {
 
         this.vanityURLCache = new Collection();
 
-        this.fetchCache().then(() => {
-            this.cacheFetched = true;
-        });
+        if (this.client.readyAt) {
+            this.fetchCache().then(() => {
+                this.cacheFetched = true;
+                this.emit('cacheFetched');
+            });
+        } else {
+            this.client.on('ready', () => {
+                this.fetchCache().then(() => {
+                    this.cacheFetched = true;
+                    this.emit('cacheFetched');
+                });
+            });
+        }
+        
 
         this.client.on('guildMemberAdd', (member) => this.handleGuildMemberAdd.bind(this, member as GuildMember));
     }
@@ -142,26 +154,30 @@ class InvitesTracker extends EventEmitter {
     }
 
     private fetchGuildCache(guild: Guild): Promise<void> {
-        if (guild.me.hasPermission('MANAGE_GUILD') && this.options.fetchGuilds) {
-            return guild.fetchInvites().then((invites) => {
-                this.invitesCache.set(guild.id, invites);
-                this.invitesCacheUpdates.set(guild.id, Date.now());
-            }).catch(() => {});
-        }
-        return new Promise((resolve) => resolve());
+        return new Promise((resolve) => {
+            if (guild.me.hasPermission('MANAGE_GUILD') && this.options.fetchGuilds) {
+                guild.fetchInvites().then((invites) => {
+                    this.invitesCache.set(guild.id, invites);
+                    this.invitesCacheUpdates.set(guild.id, Date.now());
+                    resolve();
+                }).catch(() => resolve());
+            } else resolve();
+        });
     }
 
     private fetchGuildVanityCode(guild: Guild): Promise<void> {
-        if (this.options.fetchVanity && guild.features.includes('VANITY_URL')) {
-            if (guild.vanityURLCode) {
-                this.vanityURLCache.set(guild.id, guild.vanityURLCode);
-                return new Promise((resolve) => resolve());
-            }
-            return guild.fetchVanityCode().then((code) => {
-                this.vanityURLCache.set(guild.id, code);
-            }).catch(() => {});
-        }
-        return new Promise((resolve) => resolve());
+        return new Promise((resolve) => {
+            if (this.options.fetchVanity && guild.features.includes('VANITY_URL')) {
+                if (guild.vanityURLCode) {
+                    this.vanityURLCache.set(guild.id, guild.vanityURLCode);
+                    resolve();
+                }
+                guild.fetchVanityCode().then((code) => {
+                    this.vanityURLCache.set(guild.id, code);
+                    resolve();
+                }).catch(() => resolve());
+            } else resolve();
+        });
     }
 
     public async fetchCache() {
