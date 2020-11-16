@@ -5,7 +5,7 @@
     "author": "Androz2091 <androz2091@gmail.com>",
     "license": "MIT",
     "dependencies": {
-        "discord.js": "^12.2.0"
+        "discord.js": "^12.3.1"
     },
     "devDependencies": {
         "@types/ws": "^7.2.6",
