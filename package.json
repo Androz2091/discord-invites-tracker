@@ -1,7 +1,7 @@
 {
     "name": "@androz2091/discord-invites-tracker",
     "version": "1.0.0",
-    "main": "index.js",
+    "main": "lib/index.js",
     "author": "Androz2091 <androz2091@gmail.com>",
     "license": "MIT",
     "dependencies": {},

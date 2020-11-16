@@ -6,7 +6,8 @@
         "strict": true,
         "strictNullChecks": false,
         "resolveJsonModule": true,
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "outDir": "lib"
     },
     "files": [
         "index.ts"
