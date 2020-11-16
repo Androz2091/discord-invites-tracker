@@ -11,3 +11,6 @@ index.d.ts
 
 # Environment variables
 .env
+
+# Private tests
+.test*
