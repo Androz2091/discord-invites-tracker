@@ -60,7 +60,7 @@ client.login(process.env.TOKEN);
 ## Ignoring guilds
 
 ```js
-const InvitesTracker = require('discord-invites-tracker');
+const InvitesTracker = require('@androz2091/discord-invites-tracker');
 const tracker = InvitesTracker.init(client, {
     fetchGuilds: true,
     fetchVanity: true,
