@@ -5,6 +5,9 @@
     "author": "Androz2091 <androz2091@gmail.com>",
     "license": "MIT",
     "dependencies": {},
+    "scripts": {
+        "build": "tsc"
+    },
     "devDependencies": {
         "@types/ws": "^7.2.6",
         "@typescript-eslint/eslint-plugin": "^3.9.0",
