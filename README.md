@@ -1,8 +1,16 @@
-# Discord Invites Tracker
+# [Discord Invites Tracker](https://npmjs.com/@androz2091/discord-invites-tracker)
 
 ⚠️ Discord invites tracker is still in development. It only supports Discord.js v12 for the moment. Star the project on [GitHub](https://github.com/Androz2091/discord-invites-tracker) to give support to the developers!
 
 Track the invites in your servers to know who invited who and with which invite!
+
+## Installation
+
+```sh
+npm install @androz2091/discord-invites-tracker
+# or
+yarn add @androz2091/discord-invites-tracker
+```
 
 ## Example
 
