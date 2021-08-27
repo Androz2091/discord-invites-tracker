@@ -16,7 +16,9 @@ yarn add @androz2091/discord-invites-tracker
 
 ```js
 const Discord = require('discord.js');
-const client = new Discord.Client();
+const client = new Discord.Client({
+    intents: [Discord.Intents.FLAGS.GUILDS]
+});
 
 const InvitesTracker = require('@androz2091/discord-invites-tracker');
 const tracker = InvitesTracker.init(client, {
