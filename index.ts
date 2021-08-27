@@ -130,7 +130,7 @@ class InvitesTracker extends EventEmitter {
 
     private async handleInviteCreate (invite: TrackedInvite): Promise<void> {
         // Vérifier que le cache pour ce serveur existe bien
-        if(this.options.fetchGuilds) await this.fetchGuildCache(invite.guild, true);
+        if(this.options.fetchGuilds) await this.fetchGuildCache(invite.guild as Guild, true);
         // Ensuite, ajouter l'invitation au cache du serveur
         if (this.invitesCache.get(invite.guild.id)) {
             this.invitesCache.get(invite.guild.id).set(invite.code, invite);
@@ -155,7 +155,7 @@ class InvitesTracker extends EventEmitter {
         if (!this.guilds.has(member.guild.id)) return;
 
         // Récupération des nouvelles invitations
-        const currentInvites = await member.guild.fetchInvites().catch(() => {});
+        const currentInvites = await member.guild.invites.fetch().catch(() => {});
         if (!currentInvites) {
             // Si les invitations n'ont pas pu être récupérées
             this.emit('guildMemberAdd', member, 'permissions', null);
@@ -196,8 +196,8 @@ class InvitesTracker extends EventEmitter {
     private fetchGuildCache(guild: Guild, useCache: boolean = false): Promise<void> {
         return new Promise((resolve) => {
             if (this.invitesCache.has(guild.id) && useCache) resolve();
-            if (guild.me.hasPermission('MANAGE_GUILD')) {
-                guild.fetchInvites().then((invites) => {
+            if (guild.me.permissions.has('MANAGE_GUILD')) {
+                guild.invites.fetch().then((invites) => {
                     this.invitesCache.set(guild.id, invites);
                     this.invitesCacheUpdates.set(guild.id, Date.now());
                     resolve();
@@ -207,7 +207,7 @@ class InvitesTracker extends EventEmitter {
     }
 
     public async fetchCache() {
-        const fetchGuildCachePromises = this.guilds.array().map((guild) => this.fetchGuildCache(guild));
+        const fetchGuildCachePromises = Array.from(this.guilds).map(([,guild]) => this.fetchGuildCache(guild));
         await Promise.all(fetchGuildCachePromises);
     }
 
