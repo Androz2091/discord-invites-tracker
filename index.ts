@@ -177,7 +177,7 @@ class InvitesTracker extends EventEmitter {
 
         // L'invitation peut aussi être une invitation vanity (https://discord.gg/invitation-personnalisee)
         let isVanity = false;
-        if (usedInvites.length === 0 && !member.guild.features.includes('VANITY_URL')) {
+        if (usedInvites.length === 0 && member.guild.features.includes('VANITY_URL')) {
             // On récupère l'invitation vanity
             const vanityInvite = await member.guild.fetchVanityData();
             // On récupère le cache
