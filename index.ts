@@ -204,7 +204,7 @@ class InvitesTracker extends EventEmitter {
                         resolve();
                     }).catch(() => resolve());
                 } else resolve();
-            });
+            })..catch(() => resolve());
         });
     }
 
