@@ -195,14 +195,16 @@ class InvitesTracker extends EventEmitter {
 
     private fetchGuildCache(guild: Guild, useCache: boolean = false): Promise<void> {
         return new Promise((resolve) => {
-            if (this.invitesCache.has(guild.id) && useCache) resolve();
-            if (guild.me.permissions.has('MANAGE_GUILD')) {
-                guild.invites.fetch().then((invites) => {
-                    this.invitesCache.set(guild.id, invites);
-                    this.invitesCacheUpdates.set(guild.id, Date.now());
-                    resolve();
-                }).catch(() => resolve());
-            } else resolve();
+            guild.me.fetch().then(() => {
+                if (this.invitesCache.has(guild.id) && useCache) resolve();
+                if (guild.me.permissions.has('MANAGE_GUILD')) {
+                    guild.invites.fetch().then((invites) => {
+                        this.invitesCache.set(guild.id, invites);
+                        this.invitesCacheUpdates.set(guild.id, Date.now());
+                        resolve();
+                    }).catch(() => resolve());
+                } else resolve();
+            }).catch(() => resolve());
         });
     }
 
