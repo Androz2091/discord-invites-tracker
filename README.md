@@ -60,26 +60,27 @@ client.login(process.env.TOKEN);
 ```js
 tracker.on('guildMemberAdd', (member, type, invite) => {
 
-        const welcomeChannel = member.guild.channels.cache.find((ch) => ch.name === 'welcome');
+    const welcomeChannel = member.guild.channels.cache.find((ch) => ch.name === 'welcome');
 
-	if (type === 'normal') {
-		welcomeChannel.send(`Willkommen ${member}! Du wurdest von ${invite.inviter.username} eingeladen!`);
-	}
+    if (type === 'normal') {
+	welcomeChannel.send(`Willkommen ${member}! Du wurdest von ${invite.inviter.username} eingeladen!`);
+    }
 
-	else if (type === 'vanity') {
-		welcomeChannel.send(`Willkommen ${member}! Du bist über die Vanity-URL beigetrten!`);
-	}
+    else if (type === 'vanity') {
+	welcomeChannel.send(`Willkommen ${member}! Du bist über die Vanity-URL beigetrten!`);
+    }
 
-	else if (type === 'permissions') {
-		welcomeChannel.send(`Willkommen ${member}! Ich konnte nicht erfassen, wie du dem Server beigetreten bist, weil ich nicht über die Berechtigung "Server verwalten" verfüge!`);
-	}
+    else if (type === 'permissions') {
+	welcomeChannel.send(`Willkommen ${member}! Ich konnte nicht erfassen, wie du dem Server beigetreten bist, weil ich nicht über die Berechtigung "Server verwalten" verfüge!`);
+    }
 
-	else if (type === 'unknown') {
-		welcomeChannel.send(`Willkommen ${member}! Ich konnte nicht erfassen, wie du dem Server beigetreten bist...`);
-	}
+    else if (type === 'unknown') {
+	welcomeChannel.send(`Willkommen ${member}! Ich konnte nicht erfassen, wie du dem Server beigetreten bist...`);
+    }
 });
-```
 
+client.login(process.env.TOKEN);
+```
 
 **Different join types available:**
 
