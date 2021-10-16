@@ -14,6 +14,9 @@ yarn add @androz2091/discord-invites-tracker
 
 ## Example
 
+
+### English
+
 ```js
 const Discord = require('discord.js');
 const client = new Discord.Client({
@@ -51,6 +54,32 @@ tracker.on('guildMemberAdd', (member, type, invite) => {
 
 client.login(process.env.TOKEN);
 ```
+
+### Deutsch
+
+```js
+tracker.on('guildMemberAdd', (member, type, invite) => {
+
+	const invited = interaction.guild.channels.cache.get(LisaNudes.invitedc)
+
+	if (type === 'normal') {
+		invited.send(`Willkommen ${member}! Du wurdest von ${invite.inviter.username} eingeladen!`);
+	}
+
+	else if (type === 'vanity') {
+		invited.send(`Willkommen ${member}! Du bist über die Vanity-URL beigetrten!`);
+	}
+
+	else if (type === 'permissions') {
+		invited.send(`Willkommen ${member}! Ich konnte nicht erfassen, wie du dem Server beigetreten bist, weil ich nicht über die Berechtigung "Server verwalten" verfüge!`);
+	}
+
+	else if (type === 'unknown') {
+		invited.send(`Willkommen ${member}! Ich konnte nicht erfassen, wie du dem Server beigetreten bist...`);
+	}
+});
+```
+
 
 **Different join types available:**
 
