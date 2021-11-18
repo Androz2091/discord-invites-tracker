@@ -209,7 +209,7 @@ class InvitesTracker extends EventEmitter {
     }
 
     public async fetchCache() {
-        const fetchGuildCachePromises = (await this.client.guilds.fetch()).map(guild => this.fetchGuildCache(guild));
+        const fetchGuildCachePromises = this.client.guilds.cache.map(guild => this.fetchGuildCache(guild));
         await Promise.all(fetchGuildCachePromises);
     }
 
