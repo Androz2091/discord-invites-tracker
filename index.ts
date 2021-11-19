@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import type {
-    Client, Snowflake, Guild, GuildMember, Invite
+    Client, Snowflake, Guild, GuildMember, Invite, User
 } from 'discord.js';
 import {
     Collection
@@ -33,6 +33,7 @@ interface InviteData {
     maxUses: number|null;
     maxAge: number|null;
     createdTimestamp: number|null;
+    inviter: User|null;
 }
 
 interface VanityInviteData {
@@ -147,6 +148,7 @@ class InvitesTracker extends EventEmitter {
             maxUses: invite.maxUses,
             maxAge: invite.maxAge,
             createdTimestamp: invite.createdTimestamp,
+            inviter: invite.inviter
         };
     }
 
