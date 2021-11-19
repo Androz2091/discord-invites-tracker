@@ -1,7 +1,5 @@
 # [Discord Invites Tracker](https://npmjs.com/@androz2091/discord-invites-tracker)
 
-⚠️ Discord invites tracker is still in development. Star the project on [GitHub](https://github.com/Androz2091/discord-invites-tracker) to give support to the developers!
-
 Track the invites in your servers to know who invited who and with which invite!
 
 ## Installation
