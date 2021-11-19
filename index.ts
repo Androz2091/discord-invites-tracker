@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import type {
-    Client, Snowflake, Invite, Guild, GuildMember
+    Client, Snowflake, Guild, GuildMember, Invite
 } from 'discord.js';
 import {
     Collection
@@ -10,7 +10,7 @@ type JoinType = 'permissions' | 'normal' | 'vanity' | 'unknown';
 
 declare interface InvitesTracker {
     on(event: 'cacheFetched', listener: () => void): this;
-    on(event: 'guildMemberAdd', listener: (member: GuildMember, joinType: JoinType, usedInvite: Invite | null) => void): this;
+    on(event: 'guildMemberAdd', listener: (member: GuildMember, joinType: JoinType, usedInvite: InviteData | null) => void): this;
 }
 
 interface ExemptGuildFunction {
@@ -25,17 +25,27 @@ interface InvitesTrackerOptions {
     activeGuilds?: Snowflake[];
 }
 
-interface VanityInvite {
+interface InviteData {
+    guildId: Snowflake;
     code: string;
-    uses: number;
+    url: string;
+    uses: number|null;
+    maxUses: number|null;
+    maxAge: number|null;
+    createdTimestamp: number|null;
 }
 
-interface DeletedInvite extends Invite {
+interface VanityInviteData {
+    code: string|null;
+    uses: number|null;
+}
+
+interface DeletedInviteData extends InviteData {
     deleted?: boolean;
     deletedTimestamp?: number;
 };
 
-type TrackedInvite = DeletedInvite & Invite;
+type TrackedInviteData = DeletedInviteData & InviteData;
 
 /**
  * Compare le cache et les données en direct pour trouver quelle invitation a été utilisée.
@@ -43,8 +53,8 @@ type TrackedInvite = DeletedInvite & Invite;
  * @param currentInvites Les invitations du serveur. Celles-ci sont les invitations qui sont actuellement sur le serveur.
  * @returns Les invitations qui pourraient convenir, classées de la plus probable à la moins probable.
  */
-const compareInvitesCache = (cachedInvites: Collection<string, TrackedInvite>, currentInvites: Collection<string, TrackedInvite>): TrackedInvite[] => {
-    const invitesUsed: Invite[] = [];
+const compareInvitesCache = (cachedInvites: Collection<string, TrackedInviteData>, currentInvites: Collection<string, TrackedInviteData>): TrackedInviteData[] => {
+    const invitesUsed: InviteData[] = [];
     currentInvites.forEach((invite) => {
         if (
             // L'invitation doit forcément avoir été utilisée une fois
@@ -52,7 +62,7 @@ const compareInvitesCache = (cachedInvites: Collection<string, TrackedInvite>, c
             // L'invitation doit être dans le cache (sinon impossible de comparer les utilisations)
             && cachedInvites.get(invite.code)
             // L'invitation doit avoir été utilisée au moins une fois
-            && cachedInvites.get(invite.code).uses < invite.uses
+            && cachedInvites.get(invite.code)!.uses! < invite.uses!
         ) {
             invitesUsed.push(invite);
         }
@@ -67,9 +77,9 @@ const compareInvitesCache = (cachedInvites: Collection<string, TrackedInvite>, c
                 // Si l'invitation n'est plus présente
                 !currentInvites.get(invite.code)
                 // Si l'invitation était bien une invitation a un nombre d'utilisation limitée
-                && invite.maxUses > 0
+                && invite.maxUses! > 0
                 // Et si l'invitation était sur le point d'atteindre le nombre d'utilisations max
-                && invite.uses === (invite.maxUses - 1)
+                && invite.uses === (invite.maxUses! - 1)
             ) {
                 invitesUsed.push(invite);
             }
@@ -83,8 +93,8 @@ class InvitesTracker extends EventEmitter {
     public client: Client;
     public options: Partial<InvitesTrackerOptions>;
 
-    public invitesCache: Collection<Snowflake, Collection<string, TrackedInvite>>;
-    public vanityInvitesCache: Collection<Snowflake, VanityInvite>;
+    public invitesCache: Collection<Snowflake, Collection<string, TrackedInviteData>>;
+    public vanityInvitesCache: Collection<Snowflake, VanityInviteData>;
     public invitesCacheUpdates: Collection<Snowflake, number>;
     public cacheFetched: boolean;
 
@@ -123,26 +133,38 @@ class InvitesTracker extends EventEmitter {
 
     get guilds(): Collection<Snowflake, Guild> {
         let guilds = this.client.guilds.cache;
-        if (this.options.exemptGuild) guilds = guilds.filter((g) => !this.options.exemptGuild(g));
-        if (this.options.activeGuilds) guilds = guilds.filter((g) => this.options.activeGuilds.includes(g.id));
+        if (this.options.exemptGuild) guilds = guilds.filter((g) => !this.options.exemptGuild!(g));
+        if (this.options.activeGuilds) guilds = guilds.filter((g) => this.options.activeGuilds!.includes(g.id));
         return guilds;
     }
 
-    private async handleInviteCreate (invite: TrackedInvite): Promise<void> {
+    static mapInviteData(invite: Invite): TrackedInviteData {
+        return {
+            guildId: invite.guild!.id,
+            code: invite.code,
+            url: invite.url,
+            uses: invite.uses,
+            maxUses: invite.maxUses,
+            maxAge: invite.maxAge,
+            createdTimestamp: invite.createdTimestamp,
+        };
+    }
+
+    private async handleInviteCreate (invite: Invite): Promise<void> {
         // Vérifier que le cache pour ce serveur existe bien
         if(this.options.fetchGuilds) await this.fetchGuildCache(invite.guild as Guild, true);
         // Ensuite, ajouter l'invitation au cache du serveur
-        if (this.invitesCache.get(invite.guild.id)) {
-            this.invitesCache.get(invite.guild.id).set(invite.code, invite);
+        if (this.invitesCache.get(invite.guild!.id)) {
+            this.invitesCache.get(invite.guild!.id)!.set(invite.code, InvitesTracker.mapInviteData(invite));
         }
     }
 
     private async handleInviteDelete (invite: Invite): Promise<void> {
         // Récupère le cache du serveur
-        const cachedInvites = this.invitesCache.get(invite.guild.id);
+        const cachedInvites = this.invitesCache.get(invite.guild!.id);
         // Si le cache pour ce serveur existe et si l'invitation existe bien dans le cache de ce serveur
         if(cachedInvites && cachedInvites.get(invite.code)) {
-            cachedInvites.get(invite.code).deletedTimestamp = Date.now();
+            cachedInvites.get(invite.code)!.deletedTimestamp = Date.now();
         }
     }
 
@@ -155,7 +177,11 @@ class InvitesTracker extends EventEmitter {
         if (!this.guilds.has(member.guild.id)) return;
 
         // Récupération des nouvelles invitations
-        const currentInvites = await member.guild.invites.fetch().catch(() => {});
+        const currentInvites = await member.guild.invites.fetch().catch(() => new Collection()) as Collection<string, Invite>;
+        const currentInvitesData = new Collection<string, TrackedInviteData>();
+        currentInvites.forEach((invite) => {
+            currentInvitesData.set(invite.code, InvitesTracker.mapInviteData(invite));
+        });
         if (!currentInvites) {
             // Si les invitations n'ont pas pu être récupérées
             this.emit('guildMemberAdd', member, 'permissions', null);
@@ -164,7 +190,7 @@ class InvitesTracker extends EventEmitter {
         // Récupération des invitations en cache
         const cachedInvites = this.invitesCache.get(member.guild.id);
         // Mise à jour du cache
-        this.invitesCache.set(member.guild.id, currentInvites);
+        this.invitesCache.set(member.guild.id, currentInvitesData);
         this.invitesCacheUpdates.set(member.guild.id, Date.now());
         // Si il n'y avait pas de données en cache, on ne peut tout simplement pas déterminer l'invitation utilisée
         if (!cachedInvites) {
@@ -173,7 +199,7 @@ class InvitesTracker extends EventEmitter {
         }
 
         // Ensuite, on compare le cache et les données actuelles (voir commentaires de la fonction)
-        let usedInvites = compareInvitesCache(cachedInvites, currentInvites);
+        let usedInvites = compareInvitesCache(cachedInvites, currentInvitesData);
 
         // L'invitation peut aussi être une invitation vanity (https://discord.gg/invitation-personnalisee)
         let isVanity = false;
@@ -186,7 +212,7 @@ class InvitesTracker extends EventEmitter {
             this.vanityInvitesCache.set(member.guild.id, vanityInvite);
             if (vanityInviteCache) {
                 // Si le nombre d'utilisation a augmenté
-                if (vanityInviteCache.uses < vanityInvite.uses) isVanity = true;
+                if (vanityInviteCache.uses! < vanityInvite.uses!) isVanity = true;
             }
         }
 
@@ -196,11 +222,15 @@ class InvitesTracker extends EventEmitter {
     private fetchGuildCache(guild: Guild, useCache: boolean = false): Promise<void> {
         return new Promise((resolve) => {
             guild.fetch().then(() => {
-                guild.me.fetch().then(() => {
+                guild.me!.fetch().then(() => {
                     if (this.invitesCache.has(guild.id) && useCache) resolve();
-                    if (guild.me.permissions.has('MANAGE_GUILD')) {
+                    if (guild.me!.permissions.has('MANAGE_GUILD')) {
                         guild.invites.fetch().then((invites) => {
-                            this.invitesCache.set(guild.id, invites);
+                            const invitesData = new Collection<string, TrackedInviteData>();
+                            invites.forEach((invite) => {
+                                invitesData.set(invite.code, InvitesTracker.mapInviteData(invite));
+                            });
+                            this.invitesCache.set(guild.id, invitesData);
                             this.invitesCacheUpdates.set(guild.id, Date.now());
                             resolve();
                         }).catch(() => resolve());

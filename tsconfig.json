@@ -1,10 +1,9 @@
 {
     "compilerOptions": {
-        "target": "ES5",
+        "target": "esnext",
         "module": "commonjs",
         "declaration": true,
         "strict": true,
-        "strictNullChecks": false,
         "resolveJsonModule": true,
         "esModuleInterop": true,
         "outDir": "lib"
