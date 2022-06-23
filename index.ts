@@ -225,7 +225,7 @@ class InvitesTracker extends EventEmitter {
         return new Promise((resolve) => {
             guild.fetch().then(() => {
                 guild.me!.fetch().then(() => {
-                    if (this.invitesCache.has(guild.id) && useCache) resolve();
+                    if (this.invitesCache.has(guild.id) && useCache) return resolve();
                     if (guild.me!.permissions.has('MANAGE_GUILD')) {
                         guild.invites.fetch().then((invites) => {
                             const invitesData = new Collection<string, TrackedInviteData>();
