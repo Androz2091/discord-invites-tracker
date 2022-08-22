@@ -3,7 +3,7 @@ import type {
     Client, Snowflake, Guild, GuildMember, Invite, User
 } from 'discord.js';
 import {
-    Collection, GuildFeature, PermissionsBitFlags
+    Collection, GuildFeature, PermissionFlagsBits
 } from 'discord.js';
 
 type JoinType = 'permissions' | 'normal' | 'vanity' | 'unknown';
