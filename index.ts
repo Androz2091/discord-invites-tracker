@@ -3,7 +3,7 @@ import type {
     Client, Snowflake, Guild, GuildMember, Invite, User
 } from 'discord.js';
 import {
-    Collection
+    Collection, GuildFeature, PermissionFlagsBits
 } from 'discord.js';
 
 type JoinType = 'permissions' | 'normal' | 'vanity' | 'unknown';
@@ -205,7 +205,7 @@ class InvitesTracker extends EventEmitter {
 
         // L'invitation peut aussi être une invitation vanity (https://discord.gg/invitation-personnalisee)
         let isVanity = false;
-        if (usedInvites.length === 0 && member.guild.features.includes('VANITY_URL')) {
+        if (usedInvites.length === 0 && member.guild.features.includes(GuildFeature.VanityURL)) {
             // On récupère l'invitation vanity
             const vanityInvite = await member.guild.fetchVanityData();
             // On récupère le cache
@@ -224,9 +224,9 @@ class InvitesTracker extends EventEmitter {
     private fetchGuildCache(guild: Guild, useCache: boolean = false): Promise<void> {
         return new Promise((resolve) => {
             guild.fetch().then(() => {
-                guild.me!.fetch().then(() => {
+                guild.members.me!.fetch().then(() => {
                     if (this.invitesCache.has(guild.id) && useCache) return resolve();
-                    if (guild.me!.permissions.has('MANAGE_GUILD')) {
+                    if (guild.members.me!.permissions.has(PermissionFlagsBits.ManageGuild)) {
                         guild.invites.fetch().then((invites) => {
                             const invitesData = new Collection<string, TrackedInviteData>();
                             invites.forEach((invite) => {
