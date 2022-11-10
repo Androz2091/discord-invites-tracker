@@ -234,7 +234,12 @@ class InvitesTracker extends EventEmitter {
                             });
                             this.invitesCache.set(guild.id, invitesData);
                             this.invitesCacheUpdates.set(guild.id, Date.now());
-                            resolve();
+                            if (guild.features.includes(GuildFeature.VanityURL) && this.options.fetchVanity) {
+                                guild.fetchVanityData().then((vanityInvite) => {
+                                    this.vanityInvitesCache.set(guild.id, vanityInvite);
+                                    resolve();
+                                });
+                            } else resolve();
                         }).catch(() => resolve());
                     } else resolve();
                 });
