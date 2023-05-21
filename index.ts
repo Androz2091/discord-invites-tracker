@@ -118,7 +118,7 @@ class InvitesTracker extends EventEmitter {
                     this.emit('cacheFetched');
                 });
             } else {
-                this.client.on('ready', () => {
+                this.client.once('ready', () => {
                     this.fetchCache().then(() => {
                         this.cacheFetched = true;
                         this.emit('cacheFetched');
