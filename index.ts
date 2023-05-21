@@ -221,32 +221,33 @@ class InvitesTracker extends EventEmitter {
         this.emit('guildMemberAdd', member, isVanity ? 'vanity' : usedInvites[0] ? 'normal' : 'unknown', usedInvites[0] ?? null);
     }
 
-    private fetchGuildCache(guild: Guild, useCache: boolean = false): Promise<void> {
-        return new Promise((resolve) => {
-            guild.fetch().then(() => {
-                guild.members.me!.fetch().then(() => {
-                    if (this.invitesCache.has(guild.id) && useCache) return resolve();
-                    if (guild.members.me!.permissions.has(PermissionFlagsBits.ManageGuild)) {
-                        guild.invites.fetch().then((invites) => {
-                            const invitesData = new Collection<string, TrackedInviteData>();
-                            invites.forEach((invite) => {
-                                invitesData.set(invite.code, InvitesTracker.mapInviteData(invite));
-                            });
-                            this.invitesCache.set(guild.id, invitesData);
-                            this.invitesCacheUpdates.set(guild.id, Date.now());
-                            if (guild.features.includes(GuildFeature.VanityURL) && this.options.fetchVanity) {
-                                guild.fetchVanityData().then((vanityInvite) => {
-                                    this.vanityInvitesCache.set(guild.id, vanityInvite);
-                                    resolve();
-                                });
-                            } else resolve();
-                        }).catch(() => resolve());
-                    } else resolve();
-                });
-            }).catch(() => resolve());
-        });
-    }
+    private async fetchGuildCache(guild: Guild, useCache: boolean = false): Promise<void> {
+        try {
+            await guild.fetch();
+            await guild.members.me!.fetch();
 
+            if (this.invitesCache.has(guild.id) && useCache) {
+                return;
+            }
+    
+            if (guild.members.me!.permissions.has(PermissionFlagsBits.ManageGuild)) {
+                const invites = await guild.invites.fetch();
+                const invitesData = new Collection<string, TrackedInviteData>();
+                invites.forEach((invite) => {
+                    invitesData.set(invite.code, InvitesTracker.mapInviteData(invite));
+                });
+                this.invitesCache.set(guild.id, invitesData);
+                this.invitesCacheUpdates.set(guild.id, Date.now());
+                if (guild.features.includes(GuildFeature.VanityURL) && this.options.fetchVanity) {
+                    const vanityInvite = await guild.fetchVanityData();
+                    this.vanityInvitesCache.set(guild.id, vanityInvite);
+                }
+            }
+        } catch {
+            // Ignore this error
+        }
+    }
+    
     public async fetchCache() {
         const fetchGuildCachePromises = this.client.guilds.cache.map(guild => this.fetchGuildCache(guild));
         await Promise.all(fetchGuildCachePromises);
