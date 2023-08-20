@@ -142,7 +142,7 @@ class InvitesTracker extends EventEmitter {
 
     private async handleInviteCreate(invite: Invite): Promise<void> {
         // Vérifier que le cache pour ce serveur existe bien
-        if(this.options.fetchGuilds) await this.fetchGuildCache(invite.guild as Guild, true);
+        if (this.options.fetchGuilds) await this.fetchGuildCache(invite.guild as Guild, true);
         // Ensuite, ajouter l'invitation au cache du serveur
         if (this.invitesCache.get(invite.guild!.id)) {
             this.invitesCache.get(invite.guild!.id)!.set(invite.code, InvitesTracker.mapInviteData(invite));
@@ -153,7 +153,7 @@ class InvitesTracker extends EventEmitter {
         // Récupère le cache du serveur
         const cachedInvites = this.invitesCache.get(invite.guild!.id);
         // Si le cache pour ce serveur existe et si l'invitation existe bien dans le cache de ce serveur
-        if(cachedInvites && cachedInvites.get(invite.code)) {
+        if (cachedInvites && cachedInvites.get(invite.code)) {
             cachedInvites.get(invite.code)!.deletedTimestamp = Date.now();
         }
     }
