@@ -1,17 +1,17 @@
 module.exports = {
     env: {
         es2020: true,
-        node: true,
+        node: true
     },
     extends: [
-        'airbnb-base',
+        'airbnb-base'
     ],
     parser: '@typescript-eslint/parser',
     parserOptions: {
-        ecmaVersion: 11,
+        ecmaVersion: 11
     },
     plugins: [
-        '@typescript-eslint',
+        '@typescript-eslint'
     ],
     rules: {
         'comma-dangle': [ 'error', 'never' ],
