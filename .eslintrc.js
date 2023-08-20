@@ -20,6 +20,7 @@ module.exports = {
         'lines-between-class-members': 0,
         'no-unused-vars': 'off',
         '@typescript-eslint/no-unused-vars': 'error',
+        'linebreak-style': ['error', 'windows'],
         'max-len': 0
     }
 };
