@@ -189,7 +189,7 @@ class InvitesTracker extends EventEmitter {
         }
 
         // Ensuite, on compare le cache et les données actuelles (voir commentaires de la fonction)
-        let usedInvites = compareInvitesCache(cachedInvites, currentInvitesData);
+        const usedInvites = compareInvitesCache(cachedInvites, currentInvitesData);
 
         // L'invitation peut aussi être une invitation vanity (https://discord.gg/invitation-personnalisee)
         let isVanity = false;
