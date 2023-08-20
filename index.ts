@@ -73,7 +73,7 @@ const compareInvitesCache = (cachedInvites: Collection<string, TrackedInviteData
     if (invitesUsed.length < 1) {
         // Triage du cache pour que les invitations supprimées le plus récemment soient en premier
         // (logiquement une invitation supprimée il y a 0.01s a plus de chance d'être une invitation que le membre a utilisé qu'une invitation supprimée il y a 3 jours)
-        cachedInvites.sort((a, b) => (a.deletedTimestamp && b.deletedTimestamp) ? b.deletedTimestamp - a.deletedTimestamp : 0).forEach((invite) => {
+        cachedInvites.sort((a, b) => ((a.deletedTimestamp && b.deletedTimestamp) ? b.deletedTimestamp - a.deletedTimestamp : 0)).forEach((invite) => {
             if (
                 // Si l'invitation n'est plus présente
                 !currentInvites.get(invite.code)
