@@ -44,7 +44,7 @@ interface VanityInviteData {
 interface DeletedInviteData extends InviteData {
     deleted?: boolean;
     deletedTimestamp?: number;
-};
+}
 
 type TrackedInviteData = DeletedInviteData & InviteData;
 
@@ -73,7 +73,7 @@ const compareInvitesCache = (cachedInvites: Collection<string, TrackedInviteData
     if (invitesUsed.length < 1) {
         // Triage du cache pour que les invitations supprimées le plus récemment soient en premier
         // (logiquement une invitation supprimée il y a 0.01s a plus de chance d'être une invitation que le membre a utilisé qu'une invitation supprimée il y a 3 jours)
-        cachedInvites.sort((a, b) => (a.deletedTimestamp && b.deletedTimestamp) ? b.deletedTimestamp - a.deletedTimestamp : 0).forEach((invite) => {
+        cachedInvites.sort((a, b) => ((a.deletedTimestamp && b.deletedTimestamp) ? b.deletedTimestamp - a.deletedTimestamp : 0)).forEach((invite) => {
             if (
                 // Si l'invitation n'est plus présente
                 !currentInvites.get(invite.code)
@@ -140,20 +140,20 @@ class InvitesTracker extends EventEmitter {
         };
     }
 
-    private async handleInviteCreate (invite: Invite): Promise<void> {
+    private async handleInviteCreate(invite: Invite): Promise<void> {
         // Vérifier que le cache pour ce serveur existe bien
-        if(this.options.fetchGuilds) await this.fetchGuildCache(invite.guild as Guild, true);
+        if (this.options.fetchGuilds) await this.fetchGuildCache(invite.guild as Guild, true);
         // Ensuite, ajouter l'invitation au cache du serveur
         if (this.invitesCache.get(invite.guild!.id)) {
             this.invitesCache.get(invite.guild!.id)!.set(invite.code, InvitesTracker.mapInviteData(invite));
         }
     }
 
-    private async handleInviteDelete (invite: Invite): Promise<void> {
+    private async handleInviteDelete(invite: Invite): Promise<void> {
         // Récupère le cache du serveur
         const cachedInvites = this.invitesCache.get(invite.guild!.id);
         // Si le cache pour ce serveur existe et si l'invitation existe bien dans le cache de ce serveur
-        if(cachedInvites && cachedInvites.get(invite.code)) {
+        if (cachedInvites && cachedInvites.get(invite.code)) {
             cachedInvites.get(invite.code)!.deletedTimestamp = Date.now();
         }
     }
@@ -189,7 +189,7 @@ class InvitesTracker extends EventEmitter {
         }
 
         // Ensuite, on compare le cache et les données actuelles (voir commentaires de la fonction)
-        let usedInvites = compareInvitesCache(cachedInvites, currentInvitesData);
+        const usedInvites = compareInvitesCache(cachedInvites, currentInvitesData);
 
         // L'invitation peut aussi être une invitation vanity (https://discord.gg/invitation-personnalisee)
         let isVanity = false;
@@ -236,7 +236,7 @@ class InvitesTracker extends EventEmitter {
     }
 
     public async fetchCache() {
-        const fetchGuildCachePromises = this.client.guilds.cache.map(guild => this.fetchGuildCache(guild));
+        const fetchGuildCachePromises = this.client.guilds.cache.map((guild) => this.fetchGuildCache(guild));
         await Promise.all(fetchGuildCachePromises);
     }
 
