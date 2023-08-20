@@ -44,7 +44,7 @@ interface VanityInviteData {
 interface DeletedInviteData extends InviteData {
     deleted?: boolean;
     deletedTimestamp?: number;
-};
+}
 
 type TrackedInviteData = DeletedInviteData & InviteData;
 
