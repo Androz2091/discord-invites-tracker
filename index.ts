@@ -91,25 +91,13 @@ const compareInvitesCache = (cachedInvites: Collection<string, TrackedInviteData
 
 class InvitesTracker extends EventEmitter {
 
-    public client: Client;
-    public options: Partial<InvitesTrackerOptions>;
+    public invitesCache = new Collection<Snowflake, Collection<string, TrackedInviteData>>();
+    public vanityInvitesCache = new Collection<Snowflake, VanityInviteData>();
+    public invitesCacheUpdates = new Collection<Snowflake, number>();
+    public cacheFetched = false;
 
-    public invitesCache: Collection<Snowflake, Collection<string, TrackedInviteData>>;
-    public vanityInvitesCache: Collection<Snowflake, VanityInviteData>;
-    public invitesCacheUpdates: Collection<Snowflake, number>;
-    public cacheFetched: boolean;
-
-
-    constructor(client: Client, options: InvitesTrackerOptions) {
+    constructor(public client: Client, public options: InvitesTrackerOptions) {
         super();
-        this.client = client;
-        this.options = options;
-
-        this.invitesCache = new Collection();
-        this.invitesCacheUpdates = new Collection();
-        this.cacheFetched = false;
-
-        this.vanityInvitesCache = new Collection();
 
         if (this.options.fetchGuilds) {
             if (this.client.readyAt) {
