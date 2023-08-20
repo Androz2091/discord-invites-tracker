@@ -16,5 +16,13 @@
         "eslint": "^7.32.0",
         "eslint-config-airbnb-base": "^14.2.1",
         "typescript": "^4.8.4"
-    }
+    },
+    "contributors": [
+        "Androz2091 <androz2091@gmail.com>",
+        "KonkenBonken <konrad05pettersson@gmail.com>",
+        "Pandapip1",
+        "AviDoesDev",
+        "Lioness100 <jchickmm2@gmail.com>",
+        "lolollllo"
+    ]
 }
