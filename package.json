@@ -1,6 +1,6 @@
 {
     "name": "@androz2091/discord-invites-tracker",
-    "version": "1.2.4",
+    "version": "1.2.5",
     "main": "lib/index.js",
     "author": "Androz2091 <androz2091@gmail.com>",
     "license": "MIT",
@@ -18,5 +18,13 @@
     },
     "dependencies": {
         "discord.js": "^14.6.0"
-    }
+    },
+    "contributors": [
+        "Androz2091 <androz2091@gmail.com>",
+        "KonkenBonken <konrad05pettersson@gmail.com>",
+        "Pandapip1",
+        "AviDoesDev",
+        "Lioness100 <jchickmm2@gmail.com>",
+        "lolollllo"
+    ]
 }
